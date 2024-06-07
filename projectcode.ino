@@ -29,13 +29,13 @@ struct Employee {
 
 Employee employees[] = {
   {1, "seonghwan", "1Floor", 2},
-  {2, "yeonseo", "2Floor", 12},
+  {2, "yeonseo", "2Floor", 10},
   {3, "minjeong", "3Floor", 21},
   {4, "dongjin", "1Floor", 2},
-  {5, "hyunwoo", "2Floor", 12},
+  {5, "hyunwoo", "2Floor", 10},
   {6, "jihye", "3Floor", 21},
   {7, "sangmin", "1Floor", 2},
-  {8, "eunji", "2Floor", 12},
+  {8, "eunji", "2Floor", 10},
   {9, "jaehyun", "3Floor", 21},
   {10, "sooyeon", "1Floor", 2}
 };
@@ -100,35 +100,61 @@ float dist(){
 }
 
 void moveToHeight(int targetHeight) {
-  int currentHeight = dist(); // 현재 높이 측정
-  Serial.print("Current height: ");
-  Serial.println(currentHeight);
-  
-  // 목표 높이에 도달할 때까지 모터를 동작시킵니다.
-  while (currentHeight != targetHeight) {
-    if (currentHeight < targetHeight) {
-      int stepsToMove = (targetHeight - currentHeight) * stepsPer; // 목표 높이까지 필요한 스텝 계산
-      step.step(stepsToMove);
-    } else if (currentHeight > targetHeight) {
-      // 현재 높이가 목표 높이보다 높은 경우, 스테퍼 모터를 아래로 회전시킵니다.
-      int stepsToMove = (currentHeight - targetHeight) * stepsPer; // 목표 높이에서 현재 높이를 뺀 값에 stepsPer을 곱해 필요한 스텝 계산
-      step.step(-stepsToMove); // 음수 값으로 스텝을 전달하여 모터를 아래로 회전
+  if (targetHeight == 10) { // 1층의 위치가 아닌 경우에만 작동
+    while (true) {
+      int distance = dist();
+      Serial.print("Current distance: ");
+      Serial.println(distance);
+      
+      // 목표 높이에 도달하지 않았으면 모터를 작동시킵니다.
+      if (distance < targetHeight) {
+        step.step(stepsPer); // 올바른 변수명으로 수정함
+      } else {
+        // 목표 높이에 도달하면 모터 작동을 멈추고 5초간 대기
+        Serial.println("Reached target height (2nd floor), waiting for 5 seconds...");
+        delay(5000);
+        break;
+      }
+      delay(100); // 잠시 대기
     }
-    currentHeight = dist(); // 높이를 다시 측정
-    Serial.print("Updated height: ");
-    Serial.println(currentHeight);
+  } else if (targetHeight == 21) { // 3층의 경우
+    while (true) {
+      int distance = dist();
+      Serial.print("Current distance: ");
+      Serial.println(distance);
+      
+      // 목표 높이에 도달하지 않았으면 모터를 작동시킵니다.
+      if (distance < targetHeight) {
+        step.step(stepsPer); // 올바른 변수명으로 수정함
+      } else {
+        // 목표 높이에 도달하면 모터 작동을 멈추고 5초간 대기
+        Serial.println("Reached target height (3rd floor), waiting for 5 seconds...");
+        delay(5000);
+        break;
+      }
+      delay(100); // 잠시 대기
+    }
+  }
+  
+  // 1층으로 복귀하는 로직
+  // 여기서는 1층의 높이를 2로 가정합니다. 실제 높이에 맞게 조정해 주세요.
+  Serial.println("Returning to 1st floor...");
+  while (true) {
+    int distance = dist();
+    Serial.print("Current distance: ");
+    Serial.println(distance);
+    
+    // 1층의 높이보다 높은 경우 아래로 이동
+    if (distance > 2) {
+      Serial.println("Moving down...");
+      step.step(-stepsPer); // 역방향으로 이동
+    } else {
+      Serial.println("Reached 1st floor.");
+      break; // 1층에 도달하면 반복문을 종료합니다.
+    }
     delay(100); // 잠시 대기
   }
-
-  delay(5000); // 5초간 정지
-
-  // 1층으로 복귀
-  if(targetHeight != 2) {
-    moveToHeight(2); // 재귀적으로 1층의 높이인 3으로 이동하는 함수 호출
-  }
 }
-
-
 
 void displayFloorAndMove(int fingerprintID) {
   bool found = false;
